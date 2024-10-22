@@ -2,13 +2,16 @@ This is a maze generator that can be used to generate grid mazes.
 
 ## Features
 
-- Draw on the grid to create your own maze
-  ![Walls](src/demos/add-remove-walls.gif)
-- Set custom start and end points
-- Option to add/remove border around the grid system
-- Save the maze as an image
-- Auto generate a maze
-- Solve the maze
+- ### Draw on the grid to create your own maze
+  ![](src/app/demos/add-remove-walls.gif)
+- ### Set custom start and end points
+  ![](src/app/demos/change-start-end-points.gif)
+- ### Option to add/remove border around the grid system
+  ![](src/app/demos/toggle-borders.gif)
+- ### Save the maze as an image
+  ![](src/app/demos/save-maze.gif)
+- Auto generate a maze (to be developed)
+- Solve the maze (to be developed)
 
 Note: This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
