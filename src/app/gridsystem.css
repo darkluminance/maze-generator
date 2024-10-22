@@ -1,0 +1,28 @@
+.gridContainer {
+	padding: 1rem;
+}
+.grid {
+	border: 1px solid;
+	/* border-radius: 4px; */
+	user-select: none;
+	width: var(--grid-size);
+	height: var(--grid-size);
+
+	&:hover {
+		background-color: #a8a8a8;
+	}
+}
+
+.grid.gridClicked {
+	transition: 0.1s ease-in-out;
+}
+.grid.gridObstacle {
+	background-color: rgb(var(--foreground-rgb));
+}
+.grid.gridStart {
+	background-color: var(--grid-start-color);
+}
+
+.grid.gridEnd {
+	background-color: var(--grid-end-color);
+}

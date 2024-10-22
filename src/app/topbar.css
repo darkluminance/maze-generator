@@ -1,0 +1,10 @@
+.topbarContainer {
+	background-color: rgb(var(--foreground-rgb));
+	color: rgb(var(--background-start-rgb));
+}
+
+.infoBtn {
+	min-width: 28px;
+	border-radius: 50%;
+	font-weight: bold;
+}
