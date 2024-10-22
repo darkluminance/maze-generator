@@ -1,4 +1,5 @@
 This is a maze generator that can be used to generate grid mazes.
+Demo at : [https://projects-rye-mazegenerator.vercel.app/](https://projects-rye-mazegenerator.vercel.app/)
 
 ## Features
 
