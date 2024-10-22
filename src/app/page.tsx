@@ -196,6 +196,11 @@ export default function Home() {
 				<p> - Click and drag on cells to add walls between them</p>
 				<p> - Ctrl + Click to change the start position (Red color)</p>
 				<p> - Ctrl + Right Click to change the end position (Green color)</p>
+				<br />
+				<p>
+					Source code:{" "}
+					<a href="http://github.com/darkluminance/maze-generator"></a>
+				</p>
 			</dialog>
 			<div className={styles.container}>
 				<main className={styles.main}>
