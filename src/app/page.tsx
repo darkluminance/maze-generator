@@ -199,7 +199,9 @@ export default function Home() {
 				<br />
 				<p>
 					Source code:{" "}
-					<a href="http://github.com/darkluminance/maze-generator"></a>
+					<a href="http://github.com/darkluminance/maze-generator">
+						github.com/darkluminance/maze-generator
+					</a>
 				</p>
 			</dialog>
 			<div className={styles.container}>
