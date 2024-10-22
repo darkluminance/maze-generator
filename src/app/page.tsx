@@ -175,15 +175,8 @@ export default function Home() {
 	};
 
 	useEffect(() => {
-		return () => {
-			const init = async () => {
-				addEventListeners();
-				// setDimensions();
-				resetGrid();
-			};
-
-			init();
-		};
+		addEventListeners();
+		resetGrid();
 	}, []);
 
 	return (
