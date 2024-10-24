@@ -13,7 +13,7 @@ export default function Home() {
 	let COLUMNS: number;
 	// todo: check using usestate with setdim function
 
-	const [gridArray, setGridArray] = useState<Number[][]>([]);
+	const [gridArray, setGridArray] = useState<number[][]>([]);
 	const [gridStartPoint, setGridStartPoint] = useState<number[]>([]);
 	const [gridEndPoint, setGridEndPoint] = useState<number[]>([]);
 
@@ -50,7 +50,7 @@ export default function Home() {
 	const resetGrid = () => {
 		setDimensions();
 
-		let array: Number[][] = [];
+		let array: number[][] = [];
 
 		for (let row = 0; row < ROWS; row++) {
 			let rowArray = [];
@@ -87,6 +87,36 @@ export default function Home() {
 		for (let row = 1; row < ROWS - 1; row++) {
 			array[row][0] = borderValue;
 			array[row][COLUMNS - 1] = borderValue;
+		}
+
+		setGridArray([...array]);
+	};
+
+	const fillBlack = () => {
+		setDimensions();
+
+		let array = [...gridArray];
+
+		for (let row = 0; row < ROWS; row++) {
+			for (let column = 0; column < COLUMNS; column++) {
+				if (array[row][column] !== 2 && array[row][column] !== 3)
+					array[row][column] = 1;
+			}
+		}
+
+		setGridArray([...array]);
+	};
+
+	const fillWhite = () => {
+		setDimensions();
+
+		let array = [...gridArray];
+
+		for (let row = 0; row < ROWS; row++) {
+			for (let column = 0; column < COLUMNS; column++) {
+				if (array[row][column] !== 2 && array[row][column] !== 3)
+					array[row][column] = 0;
+			}
 		}
 
 		setGridArray([...array]);
@@ -145,6 +175,7 @@ export default function Home() {
 
 	const saveMaze = () => {
 		const gridElement = document.querySelector(".gridContainer") as HTMLElement;
+		const gridClass = document.querySelector(".grid");
 
 		// Get current date and time
 		const now = new Date();
@@ -166,8 +197,83 @@ export default function Home() {
 		});
 	};
 
+	const getCellNeighbors = (point: number[], adjacentCell: any) => {
+		let neighbors: number[][] = [];
+
+		const row = point[0];
+		const column = point[1];
+
+		if (row > 1) neighbors.push([row - 1, column]);
+		if (row < ROWS - 2) neighbors.push([row + 1, column]);
+		if (column > 1) neighbors.push([row, column - 1]);
+		if (column < COLUMNS - 2) neighbors.push([row, column + 1]);
+
+		return neighbors.filter(
+			(cell) =>
+				JSON.stringify(cell) !== JSON.stringify(adjacentCell) &&
+				globalArray[cell[0]][cell[1]] !== 2 &&
+				globalArray[cell[0]][cell[1]] !== 3
+		);
+	};
+
+	const shuffleArray = (array: number[][]) => {
+		for (let i = array.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[array[i], array[j]] = [array[j], array[i]];
+		}
+		return array;
+	};
+
+	const isCellSafe = (cell: number[], parent: number[]) => {
+		const cellNeighbors = getCellNeighbors(cell, parent);
+
+		for (let i = 0; i < cellNeighbors.length; i++) {
+			const cellNeighbor = cellNeighbors[i];
+			const cellValue = globalArray[cellNeighbor[0]][cellNeighbor[1]];
+			if (cellValue === 0) return false;
+		}
+
+		return true;
+	};
+
+	let globalArray: number[][] = [];
+
+	const startMazeGeneration = () => {
+		fillBlack();
+		globalArray = [...gridArray];
+		generateMaze([1, 1]);
+		setGridArray([...globalArray]);
+	};
+
+	// Maze generation
+	const generateMaze = async (point: number[]) => {
+		const cellvalue = globalArray[point[0]][point[1]];
+		if (cellvalue !== 2 && cellvalue !== 3) {
+			globalArray[point[0]][point[1]] = 0;
+			setGridArray([...globalArray]);
+			await delay(10);
+		}
+
+		const neighbors = getCellNeighbors(point, null);
+		const shuffledNeighbors = shuffleArray(neighbors);
+
+		for (let i = 0; i < shuffledNeighbors.length; i++) {
+			const neighbor = shuffledNeighbors[i];
+			const cellSafe = isCellSafe(neighbor, point);
+			if (cellSafe) {
+				globalArray = await generateMaze(neighbor);
+			}
+		}
+
+		return globalArray;
+	};
+
 	const showInfoModal = () => {
 		infoModalRef.current?.showModal();
+	};
+
+	const delay = (ms) => {
+		return new Promise((resolve) => setTimeout(resolve, ms));
 	};
 
 	const addEventListeners = () => {
@@ -209,8 +315,11 @@ export default function Home() {
 					<Topbar
 						resetClick={resetGrid}
 						toggleBorders={toggleBorders}
+						fillBlack={fillBlack}
+						fillWhite={fillWhite}
 						saveMaze={saveMaze}
 						showInfoModal={showInfoModal}
+						startMazeGeneration={startMazeGeneration}
 					></Topbar>
 					<GridSystem
 						gridArray={gridArray}
