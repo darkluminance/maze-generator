@@ -1,14 +1,14 @@
-This is a maze generator that can be used to generate grid mazes.
+This is a maze generator that can be used to generate grid mazes.<br>
 Demo at : [https://projects-rye-mazegenerator.vercel.app/](https://projects-rye-mazegenerator.vercel.app/)
 
 ## Features
 
-- ### Draw on the grid to create your own maze
+- ### Drag the grid cells using left/right click to add/remove paths
   ![](src/app/demos/add-remove-walls.gif)
 - ### Set custom start and end points
   ![](src/app/demos/change-start-end-points.gif)
-- ### Option to add/remove border around the grid system
-  ![](src/app/demos/toggle-borders.gif)
+- ### Generate a random maze
+  ![](src/app/demos/generate-maze.gif)
 - ### Save the maze as an image
   ![](src/app/demos/save-maze.gif)
 - Auto generate a maze (to be developed)

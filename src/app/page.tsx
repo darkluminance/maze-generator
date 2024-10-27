@@ -55,6 +55,9 @@ export default function Home() {
 	};
 
 	const gridSetStartPosition = (newPoint: GridPoint) => {
+		if (gridArray[newPoint.row][newPoint.column].value !== GridStates.DEFAULT)
+			return;
+
 		let array = [...gridArray];
 		const oldPoint = gridStartPoint as GridPoint;
 		array[oldPoint.row][oldPoint.column].value = GridStates.DEFAULT;
@@ -64,6 +67,9 @@ export default function Home() {
 	};
 
 	const gridSetEndPosition = (newPoint: GridPoint) => {
+		if (gridArray[newPoint.row][newPoint.column].value !== GridStates.DEFAULT)
+			return;
+
 		let array = [...gridArray];
 		const oldPoint = gridEndPoint as GridPoint;
 		array[oldPoint.row][oldPoint.column].value = GridStates.DEFAULT;
