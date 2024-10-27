@@ -1,5 +1,6 @@
 "use client";
 
+import { createWalledGrid, Grid, GridStates, GridPoint } from "./Grids";
 import GridSystem from "@/components/GridSystem";
 import Topbar from "@/components/Topbar";
 import styles from "@/page.module.css";
@@ -11,131 +12,102 @@ import html2canvas from "html2canvas";
 export default function Home() {
 	let ROWS: number;
 	let COLUMNS: number;
+	let VISITED_ARRAY: number[][] = [];
 	// todo: check using usestate with setdim function
 
-	const [gridArray, setGridArray] = useState<number[][]>([]);
-	const [gridStartPoint, setGridStartPoint] = useState<number[]>([]);
-	const [gridEndPoint, setGridEndPoint] = useState<number[]>([]);
+	const [gridArray, setGridArray] = useState<Grid[][]>([]);
+	const [gridStartPoint, setGridStartPoint] = useState<GridPoint>();
+	const [gridEndPoint, setGridEndPoint] = useState<GridPoint>();
+	const [isGenerating, setIsGenerating] = useState(false);
+	const [animationSpeed, setAnimationSpeed] = useState(50);
 
 	const infoModalRef = useRef<HTMLDialogElement>(null);
 
-	const onGridAdd = (row: number, column: number) => {
+	const gridAddPath = (previousPoint: GridPoint, currentPoint: GridPoint) => {
+		if (previousPoint === currentPoint) return;
+		if (previousPoint === null || currentPoint === null) return;
+
 		let array = [...gridArray];
-		if (array[row][column] === 2 || array[row][column] === 3) return;
-		array[row][column] = 1;
-		setGridArray([...array]);
-	};
-	const onGridClear = (row: number, column: number) => {
-		let array = [...gridArray];
-		if (array[row][column] === 2 || array[row][column] === 3) return;
-		array[row][column] = 0;
+		const wallsToOpen = checkWhichWallToOpen(previousPoint, currentPoint);
+		if (!wallsToOpen) return;
+
+		array[previousPoint.row][previousPoint.column][wallsToOpen[0]] = false;
+		array[currentPoint.row][currentPoint.column][wallsToOpen[1]] = false;
 		setGridArray([...array]);
 	};
 
-	const onGridSetStartPosition = (row: number, column: number) => {
+	const gridAddWall = (previousPoint: GridPoint, currentPoint: GridPoint) => {
+		if (previousPoint === currentPoint) return;
+		if (previousPoint === null || currentPoint === null) return;
+
 		let array = [...gridArray];
-		array[gridStartPoint[0]][gridStartPoint[1]] = 0;
-		array[row][column] = 2;
-		setGridStartPoint([row, column]);
+		const wallsToOpen = checkWhichWallToOpen(previousPoint, currentPoint);
+		if (!wallsToOpen) return;
+
+		array[previousPoint.row][previousPoint.column][wallsToOpen[0]] = true;
+		array[currentPoint.row][currentPoint.column][wallsToOpen[1]] = true;
 		setGridArray([...array]);
 	};
-	const onGridSetEndPosition = (row: number, column: number) => {
+
+	const gridSetStartPosition = (newPoint: GridPoint) => {
 		let array = [...gridArray];
-		array[gridEndPoint[0]][gridEndPoint[1]] = 0;
-		array[row][column] = 3;
-		setGridEndPoint([row, column]);
+		const oldPoint = gridStartPoint as GridPoint;
+		array[oldPoint.row][oldPoint.column].value = GridStates.DEFAULT;
+		array[newPoint.row][newPoint.column].value = GridStates.START_POSITION;
 		setGridArray([...array]);
+		setGridStartPoint(newPoint);
+	};
+
+	const gridSetEndPosition = (newPoint: GridPoint) => {
+		let array = [...gridArray];
+		const oldPoint = gridEndPoint as GridPoint;
+		array[oldPoint.row][oldPoint.column].value = GridStates.DEFAULT;
+		array[newPoint.row][newPoint.column].value = GridStates.END_POSITION;
+		setGridArray([...array]);
+		setGridEndPoint(newPoint);
+	};
+
+	const checkWhichWallToOpen = (
+		previousPoint: GridPoint,
+		currentPoint: GridPoint
+	) => {
+		if (previousPoint.row > currentPoint.row) return ["topWall", "bottomWall"];
+		if (previousPoint.row < currentPoint.row) return ["bottomWall", "topWall"];
+		if (previousPoint.column > currentPoint.column)
+			return ["leftWall", "rightWall"];
+		if (previousPoint.column < currentPoint.column)
+			return ["rightWall", "leftWall"];
+		else return;
 	};
 
 	const resetGrid = () => {
 		setDimensions();
 
-		let array: number[][] = [];
+		let array: Grid[][] = [];
 
 		for (let row = 0; row < ROWS; row++) {
-			let rowArray = [];
+			let rowArray: Grid[] = [];
+			let rowVisited: number[] = [];
 
 			for (let column = 0; column < COLUMNS; column++) {
-				rowArray.push(0);
+				const grid = createWalledGrid();
+				rowArray.push(grid);
+				rowVisited.push(0);
 			}
 
 			array.push(rowArray);
+			VISITED_ARRAY.push(rowVisited);
 		}
 
-		const startPoint = [1, 1];
-		const endPoint = [ROWS - 2, COLUMNS - 2];
+		const startPoint = { row: 0, column: 0 };
+		const endPoint = { row: ROWS - 1, column: COLUMNS - 1 };
 
 		setGridStartPoint(startPoint);
 		setGridEndPoint(endPoint);
-		array[startPoint[0]][startPoint[1]] = 2;
-		array[endPoint[0]][endPoint[1]] = 3;
+		array[startPoint.row][startPoint.column].value = GridStates.START_POSITION;
+		array[endPoint.row][endPoint.column].value = GridStates.END_POSITION;
 
 		setGridArray([...array]);
-	};
-
-	const toggleBorders = () => {
-		setDimensions();
-
-		let array = [...gridArray];
-		const borderValue = isGridBordered() ? 0 : 1;
-
-		for (let column = 0; column < COLUMNS; column++) {
-			array[0][column] = borderValue;
-			array[ROWS - 1][column] = borderValue;
-		}
-
-		for (let row = 1; row < ROWS - 1; row++) {
-			array[row][0] = borderValue;
-			array[row][COLUMNS - 1] = borderValue;
-		}
-
-		setGridArray([...array]);
-	};
-
-	const fillBlack = () => {
-		setDimensions();
-
-		let array = [...gridArray];
-
-		for (let row = 0; row < ROWS; row++) {
-			for (let column = 0; column < COLUMNS; column++) {
-				if (array[row][column] !== 2 && array[row][column] !== 3)
-					array[row][column] = 1;
-			}
-		}
-
-		setGridArray([...array]);
-	};
-
-	const fillWhite = () => {
-		setDimensions();
-
-		let array = [...gridArray];
-
-		for (let row = 0; row < ROWS; row++) {
-			for (let column = 0; column < COLUMNS; column++) {
-				if (array[row][column] !== 2 && array[row][column] !== 3)
-					array[row][column] = 0;
-			}
-		}
-
-		setGridArray([...array]);
-	};
-
-	const isGridBordered = () => {
-		for (let column = 0; column < COLUMNS; column++) {
-			if (gridArray[0][column] === 0 || gridArray[ROWS - 1][column] === 0) {
-				return false;
-			}
-		}
-
-		for (let row = 1; row < ROWS - 1; row++) {
-			if (gridArray[row][0] === 0 || gridArray[row][COLUMNS - 1] === 0) {
-				return false;
-			}
-		}
-
-		return true;
 	};
 
 	const resizeGrid = () => {
@@ -163,8 +135,9 @@ export default function Home() {
 		);
 
 		const { innerWidth: width, innerHeight: height } = window;
-		ROWS = Math.floor((height - TOPBAR_HEIGHT) / GRID_SIZE) - 1;
-		COLUMNS = Math.floor(width / GRID_SIZE) - 1;
+
+		ROWS = Math.floor((height - TOPBAR_HEIGHT) / GRID_SIZE);
+		COLUMNS = Math.floor(width / GRID_SIZE) + 1;
 	};
 
 	const onResize = () => {
@@ -175,7 +148,6 @@ export default function Home() {
 
 	const saveMaze = () => {
 		const gridElement = document.querySelector(".gridContainer") as HTMLElement;
-		const gridClass = document.querySelector(".grid");
 
 		// Get current date and time
 		const now = new Date();
@@ -197,26 +169,23 @@ export default function Home() {
 		});
 	};
 
-	const getCellNeighbors = (point: number[], adjacentCell: any) => {
-		let neighbors: number[][] = [];
+	const getCellNeighbors = (point: GridPoint, adjacentCell: any) => {
+		let neighbors: GridPoint[] = [];
 
-		const row = point[0];
-		const column = point[1];
+		const row = point.row;
+		const column = point.column;
 
-		if (row > 1) neighbors.push([row - 1, column]);
-		if (row < ROWS - 2) neighbors.push([row + 1, column]);
-		if (column > 1) neighbors.push([row, column - 1]);
-		if (column < COLUMNS - 2) neighbors.push([row, column + 1]);
+		if (row > 0) neighbors.push({ row: row - 1, column: column });
+		if (row < ROWS - 1) neighbors.push({ row: row + 1, column: column });
+		if (column > 0) neighbors.push({ row: row, column: column - 1 });
+		if (column < COLUMNS - 1) neighbors.push({ row: row, column: column + 1 });
 
 		return neighbors.filter(
-			(cell) =>
-				JSON.stringify(cell) !== JSON.stringify(adjacentCell) &&
-				globalArray[cell[0]][cell[1]] !== 2 &&
-				globalArray[cell[0]][cell[1]] !== 3
+			(cell) => JSON.stringify(cell) !== JSON.stringify(adjacentCell)
 		);
 	};
 
-	const shuffleArray = (array: number[][]) => {
+	const shuffleArray = (array: GridPoint[]) => {
 		for (let i = array.length - 1; i > 0; i--) {
 			const j = Math.floor(Math.random() * (i + 1));
 			[array[i], array[j]] = [array[j], array[i]];
@@ -224,46 +193,55 @@ export default function Home() {
 		return array;
 	};
 
-	const isCellSafe = (cell: number[], parent: number[]) => {
-		const cellNeighbors = getCellNeighbors(cell, parent);
+	let globalArray: Grid[][] = [];
 
-		for (let i = 0; i < cellNeighbors.length; i++) {
-			const cellNeighbor = cellNeighbors[i];
-			const cellValue = globalArray[cellNeighbor[0]][cellNeighbor[1]];
-			if (cellValue === 0) return false;
-		}
-
-		return true;
-	};
-
-	let globalArray: number[][] = [];
-
-	const startMazeGeneration = () => {
-		fillBlack();
+	const startMazeGeneration = async () => {
+		setDimensions();
+		resetGrid();
 		globalArray = [...gridArray];
-		generateMaze([1, 1]);
-		setGridArray([...globalArray]);
+		setIsGenerating(true);
+		await generateMaze({ row: 0, column: 0 }, { row: 0, column: 0 });
+		setIsGenerating(false);
 	};
 
 	// Maze generation
-	const generateMaze = async (point: number[]) => {
-		const cellvalue = globalArray[point[0]][point[1]];
-		if (cellvalue !== 2 && cellvalue !== 3) {
-			globalArray[point[0]][point[1]] = 0;
-			setGridArray([...globalArray]);
-			await delay(10);
+	const generateMaze = async (previousPoint: GridPoint, point: GridPoint) => {
+		if (previousPoint !== point) {
+			const wallToOpen = checkWhichWallToOpen(previousPoint, point);
+
+			if (wallToOpen) {
+				globalArray[previousPoint.row][previousPoint.column][wallToOpen[0]] =
+					false;
+				globalArray[point.row][point.column][wallToOpen[1]] = false;
+
+				// Show currently iterating point
+				if (
+					globalArray[previousPoint.row][previousPoint.column].value ===
+					GridStates.ITERATING
+				)
+					globalArray[previousPoint.row][previousPoint.column].value =
+						GridStates.DEFAULT;
+				if (globalArray[point.row][point.column].value === GridStates.DEFAULT)
+					globalArray[point.row][point.column].value = GridStates.ITERATING;
+
+				setGridArray([...globalArray]);
+				await delay(animationSpeed);
+			}
 		}
+		VISITED_ARRAY[point.row][point.column] = 1;
 
 		const neighbors = getCellNeighbors(point, null);
 		const shuffledNeighbors = shuffleArray(neighbors);
 
 		for (let i = 0; i < shuffledNeighbors.length; i++) {
 			const neighbor = shuffledNeighbors[i];
-			const cellSafe = isCellSafe(neighbor, point);
-			if (cellSafe) {
-				globalArray = await generateMaze(neighbor);
-			}
+			if (!VISITED_ARRAY[neighbor.row][neighbor.column])
+				globalArray = await generateMaze(point, neighbor);
 		}
+
+		// Reset changes to original
+		if (globalArray[point.row][point.column].value === GridStates.ITERATING)
+			globalArray[point.row][point.column].value = GridStates.DEFAULT;
 
 		return globalArray;
 	};
@@ -272,7 +250,7 @@ export default function Home() {
 		infoModalRef.current?.showModal();
 	};
 
-	const delay = (ms) => {
+	const delay = (ms: number) => {
 		return new Promise((resolve) => setTimeout(resolve, ms));
 	};
 
@@ -297,11 +275,10 @@ export default function Home() {
 				</button>
 				<h2>Instructions</h2>
 				<br />
-				<p> - Click on any cell to add an obstacle</p>
-				<p> - Right-click on any cell to remove an obstacle</p>
-				<p> - Click and drag on cells to add walls between them</p>
-				<p> - Ctrl + Click to change the start position (Red color)</p>
-				<p> - Ctrl + Right Click to change the end position (Green color)</p>
+				<p> - Left-click drag cells to add path</p>
+				<p> - Right-click and drag to remove the paths</p>
+				<p> - Ctrl + Click to change the start position (Green color)</p>
+				<p> - Ctrl + Right Click to change the end position (Red color)</p>
 				<br />
 				<p>
 					Source code:{" "}
@@ -312,22 +289,23 @@ export default function Home() {
 			</dialog>
 			<div className={styles.container}>
 				<main className={styles.main}>
-					<Topbar
-						resetClick={resetGrid}
-						toggleBorders={toggleBorders}
-						fillBlack={fillBlack}
-						fillWhite={fillWhite}
-						saveMaze={saveMaze}
-						showInfoModal={showInfoModal}
-						startMazeGeneration={startMazeGeneration}
-					></Topbar>
-					<GridSystem
-						gridArray={gridArray}
-						onGridClear={onGridClear}
-						onGridAdd={onGridAdd}
-						onGridSetStartPosition={onGridSetStartPosition}
-						onGridSetEndPosition={onGridSetEndPosition}
-					></GridSystem>
+					<div className={isGenerating ? "disabled" : ""}>
+						<Topbar
+							resetClick={resetGrid}
+							saveMaze={saveMaze}
+							showInfoModal={showInfoModal}
+							startMazeGeneration={startMazeGeneration}
+						></Topbar>
+						<GridSystem
+							gridArray={gridArray}
+							startPoint={gridStartPoint}
+							endPoint={gridEndPoint}
+							gridSetStartPosition={gridSetStartPosition}
+							gridSetEndPosition={gridSetEndPosition}
+							onGridAdd={gridAddPath}
+							onGridClear={gridAddWall}
+						></GridSystem>
+					</div>
 				</main>
 			</div>
 		</>
