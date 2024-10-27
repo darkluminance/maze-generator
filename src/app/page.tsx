@@ -10,6 +10,8 @@ import { useEffect, useRef, useState } from "react";
 import html2canvas from "html2canvas";
 
 export default function Home() {
+	type WallKey = "topWall" | "bottomWall" | "leftWall" | "rightWall";
+
 	let ROWS: number;
 	let COLUMNS: number;
 	let VISITED_ARRAY: number[][] = [];
@@ -28,7 +30,10 @@ export default function Home() {
 		if (previousPoint === null || currentPoint === null) return;
 
 		let array = [...gridArray];
-		const wallsToOpen = checkWhichWallToOpen(previousPoint, currentPoint);
+		const wallsToOpen: [WallKey, WallKey] | undefined = checkWhichWallToOpen(
+			previousPoint,
+			currentPoint
+		);
 		if (!wallsToOpen) return;
 
 		array[previousPoint.row][previousPoint.column][wallsToOpen[0]] = false;
@@ -70,7 +75,7 @@ export default function Home() {
 	const checkWhichWallToOpen = (
 		previousPoint: GridPoint,
 		currentPoint: GridPoint
-	) => {
+	): [WallKey, WallKey] | undefined => {
 		if (previousPoint.row > currentPoint.row) return ["topWall", "bottomWall"];
 		if (previousPoint.row < currentPoint.row) return ["bottomWall", "topWall"];
 		if (previousPoint.column > currentPoint.column)
@@ -207,7 +212,10 @@ export default function Home() {
 	// Maze generation
 	const generateMaze = async (previousPoint: GridPoint, point: GridPoint) => {
 		if (previousPoint !== point) {
-			const wallToOpen = checkWhichWallToOpen(previousPoint, point);
+			const wallToOpen: [WallKey, WallKey] | undefined = checkWhichWallToOpen(
+				previousPoint,
+				point
+			);
 
 			if (wallToOpen) {
 				globalArray[previousPoint.row][previousPoint.column][wallToOpen[0]] =
