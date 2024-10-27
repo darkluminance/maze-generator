@@ -16,6 +16,7 @@
 	--topbar-height: 48px;
 	--grid-end-color: #d63031;
 	--grid-start-color: #00b894;
+	--grid-iterating-color: #0984e3;
 }
 /* 
 @media (prefers-color-scheme: dark) {

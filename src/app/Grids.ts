@@ -2,6 +2,7 @@ export const enum GridStates {
 	"DEFAULT" = 0,
 	"START_POSITION" = 1,
 	"END_POSITION" = 2,
+	"ITERATING" = 3,
 }
 
 export type Grid = {

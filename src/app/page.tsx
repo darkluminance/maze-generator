@@ -19,6 +19,7 @@ export default function Home() {
 	const [gridStartPoint, setGridStartPoint] = useState<GridPoint>();
 	const [gridEndPoint, setGridEndPoint] = useState<GridPoint>();
 	const [isGenerating, setIsGenerating] = useState(false);
+	const [animationSpeed, setAnimationSpeed] = useState(50);
 
 	const infoModalRef = useRef<HTMLDialogElement>(null);
 
@@ -108,41 +109,6 @@ export default function Home() {
 
 		setGridArray([...array]);
 	};
-
-	/* const toggleBorders = () => {
-		setDimensions();
-
-		let array = [...gridArray];
-		const borderValue = isGridBordered() ? 0 : 1;
-
-		for (let column = 0; column < COLUMNS; column++) {
-			array[0][column] = borderValue;
-			array[ROWS - 1][column] = borderValue;
-		}
-
-		for (let row = 1; row < ROWS - 1; row++) {
-			array[row][0] = borderValue;
-			array[row][COLUMNS - 1] = borderValue;
-		}
-
-		setGridArray([...array]);
-	}; */
-
-	/* const isGridBordered = () => {
-		for (let column = 0; column < COLUMNS; column++) {
-			if (gridArray[0][column] === 0 || gridArray[ROWS - 1][column] === 0) {
-				return false;
-			}
-		}
-
-		for (let row = 1; row < ROWS - 1; row++) {
-			if (gridArray[row][0] === 0 || gridArray[row][COLUMNS - 1] === 0) {
-				return false;
-			}
-		}
-
-		return true;
-	}; */
 
 	const resizeGrid = () => {
 		let array = [...gridArray];
@@ -247,8 +213,19 @@ export default function Home() {
 				globalArray[previousPoint.row][previousPoint.column][wallToOpen[0]] =
 					false;
 				globalArray[point.row][point.column][wallToOpen[1]] = false;
+
+				// Show currently iterating point
+				if (
+					globalArray[previousPoint.row][previousPoint.column].value ===
+					GridStates.ITERATING
+				)
+					globalArray[previousPoint.row][previousPoint.column].value =
+						GridStates.DEFAULT;
+				if (globalArray[point.row][point.column].value === GridStates.DEFAULT)
+					globalArray[point.row][point.column].value = GridStates.ITERATING;
+
 				setGridArray([...globalArray]);
-				await delay(10);
+				await delay(animationSpeed);
 			}
 		}
 		VISITED_ARRAY[point.row][point.column] = 1;
@@ -261,6 +238,10 @@ export default function Home() {
 			if (!VISITED_ARRAY[neighbor.row][neighbor.column])
 				globalArray = await generateMaze(point, neighbor);
 		}
+
+		// Reset changes to original
+		if (globalArray[point.row][point.column].value === GridStates.ITERATING)
+			globalArray[point.row][point.column].value = GridStates.DEFAULT;
 
 		return globalArray;
 	};
@@ -294,7 +275,7 @@ export default function Home() {
 				</button>
 				<h2>Instructions</h2>
 				<br />
-				<p> - Drag cells to add path</p>
+				<p> - Left-click drag cells to add path</p>
 				<p> - Right-click and drag to remove the paths</p>
 				<p> - Ctrl + Click to change the start position (Green color)</p>
 				<p> - Ctrl + Right Click to change the end position (Red color)</p>

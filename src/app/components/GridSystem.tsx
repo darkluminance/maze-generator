@@ -57,6 +57,7 @@ function GridSystem({
 										${gridValue.rightWall ? "gridRightWall" : ""}
 										${gridValue.value === GridStates.START_POSITION ? "gridStart" : ""}
 										${gridValue.value === GridStates.END_POSITION ? "gridEnd" : ""}
+										${gridValue.value === GridStates.ITERATING ? "gridIterating" : ""}
 									`.trim()}
 									key={index2}
 									onClick={(event) => {

@@ -35,7 +35,9 @@
 .grid.gridStart {
 	background-color: var(--grid-start-color);
 }
-
 .grid.gridEnd {
 	background-color: var(--grid-end-color);
+}
+.grid.gridIterating {
+	background-color: var(--grid-iterating-color);
 }
