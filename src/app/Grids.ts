@@ -11,6 +11,7 @@ export type Grid = {
 	leftWall: boolean;
 	rightWall: boolean;
 	value: GridStates;
+	[key: string]: boolean | GridStates;
 };
 
 export type GridPoint = {
