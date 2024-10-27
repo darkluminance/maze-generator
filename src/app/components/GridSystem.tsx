@@ -1,18 +1,23 @@
 import "@/gridsystem.css";
 import { useState, useEffect } from "react";
+import { Grid, GridPoint, GridStates } from "../Grids";
 
 function GridSystem({
 	gridArray,
+	startPoint,
+	endPoint,
+	gridSetStartPosition,
+	gridSetEndPosition,
 	onGridAdd,
 	onGridClear,
-	onGridSetStartPosition,
-	onGridSetEndPosition,
 }: {
-	gridArray: Number[][];
+	gridArray: Grid[][];
+	startPoint: GridPoint | undefined;
+	endPoint: GridPoint | undefined;
+	gridSetStartPosition: Function;
+	gridSetEndPosition: Function;
 	onGridAdd: Function;
 	onGridClear: Function;
-	onGridSetStartPosition: Function;
-	onGridSetEndPosition: Function;
 }) {
 	const enum ClickStatuses {
 		"UNCLICKED" = "UNCLICKED",
@@ -23,6 +28,7 @@ function GridSystem({
 	const [clickStatus, setClickStatus] = useState<ClickStatuses>(
 		ClickStatuses.UNCLICKED
 	);
+	const [previousClick, setPreviousClick] = useState<GridPoint | null>();
 
 	useEffect(() => {
 		window.addEventListener("mousedown", (e) => {
@@ -37,37 +43,55 @@ function GridSystem({
 
 	return (
 		<div className="gridContainer flex flex-ver">
-			{/* {JSON.stringify(clickStatus)} */}
+			{/* {JSON.stringify(previousClick)} */}
 			{gridArray &&
 				gridArray.map((row, index) => (
 					<div key={index} className="gridRow flex flex-hor">
 						{row &&
 							row.map((gridValue, index2) => (
 								<div
-									className={
-										gridValue === 1
-											? "grid gridClicked gridObstacle"
-											: gridValue === 2
-											? "grid gridClicked gridStart"
-											: gridValue === 3
-											? "grid gridClicked gridEnd"
-											: "grid "
-									}
+									className={`grid
+										${gridValue.topWall ? "gridTopWall" : ""}
+										${gridValue.bottomWall ? "gridBottomWall" : ""}
+										${gridValue.leftWall ? "gridLeftWall" : ""}
+										${gridValue.rightWall ? "gridRightWall" : ""}
+										${gridValue.value === GridStates.START_POSITION ? "gridStart" : ""}
+										${gridValue.value === GridStates.END_POSITION ? "gridEnd" : ""}
+										${gridValue.value === GridStates.ITERATING ? "gridIterating" : ""}
+									`.trim()}
 									key={index2}
 									onClick={(event) => {
-										if (event.ctrlKey) onGridSetStartPosition(index, index2);
-										else onGridAdd(index, index2);
+										if (event.ctrlKey) {
+											gridSetStartPosition({
+												row: index,
+												column: index2,
+											});
+										} else {
+											setPreviousClick({ row: index, column: index2 });
+										}
 									}}
 									onContextMenu={(event) => {
 										event.preventDefault();
-										if (event.ctrlKey) onGridSetEndPosition(index, index2);
-										else onGridClear(index, index2);
+										if (event.ctrlKey)
+											gridSetEndPosition({
+												row: index,
+												column: index2,
+											});
 									}}
 									onMouseMove={() => {
-										if (clickStatus === ClickStatuses.ADD)
-											onGridAdd(index, index2);
-										else if (clickStatus === ClickStatuses.CLEAR)
-											onGridClear(index, index2);
+										const currentPoint = {
+											row: index,
+											column: index2,
+										} as GridPoint;
+										if (clickStatus === ClickStatuses.ADD) {
+											onGridAdd(previousClick, currentPoint);
+											setPreviousClick(currentPoint);
+										} else if (clickStatus === ClickStatuses.CLEAR) {
+											onGridClear(previousClick, currentPoint);
+											setPreviousClick(currentPoint);
+										} else {
+											setPreviousClick(null);
+										}
 									}}
 								></div>
 							))}
