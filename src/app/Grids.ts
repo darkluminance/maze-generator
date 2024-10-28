@@ -3,6 +3,8 @@ export const enum GridStates {
 	"START_POSITION" = 1,
 	"END_POSITION" = 2,
 	"ITERATING" = 3,
+	"VISITED" = 4,
+	"PATH" = 5,
 }
 
 export type Grid = {

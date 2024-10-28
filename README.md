@@ -9,6 +9,8 @@ Demo at : [https://projects-rye-mazegenerator.vercel.app/](https://projects-rye-
   ![](src/app/demos/change-start-end-points.gif)
 - ### Generate a random maze
   ![](src/app/demos/generate-maze.gif)
+- ### Solve the maze
+  ![](src/app/demos/solve-maze.gif)
 - ### Save the maze as an image
   ![](src/app/demos/save-maze.gif)
 - Auto generate a maze (to be developed)

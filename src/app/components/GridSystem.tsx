@@ -58,6 +58,8 @@ function GridSystem({
 										${gridValue.value === GridStates.START_POSITION ? "gridStart" : ""}
 										${gridValue.value === GridStates.END_POSITION ? "gridEnd" : ""}
 										${gridValue.value === GridStates.ITERATING ? "gridIterating" : ""}
+										${gridValue.value === GridStates.VISITED ? "gridVisited" : ""}
+										${gridValue.value === GridStates.PATH ? "gridPath" : ""}
 									`.trim()}
 									key={index2}
 									onClick={(event) => {

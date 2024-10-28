@@ -38,6 +38,12 @@
 .grid.gridEnd {
 	background-color: var(--grid-end-color);
 }
+.grid.gridVisited {
+	background-color: var(--grid-visited-color);
+}
 .grid.gridIterating {
 	background-color: var(--grid-iterating-color);
+}
+.grid.gridPath {
+	background-color: var(--grid-path-color);
 }

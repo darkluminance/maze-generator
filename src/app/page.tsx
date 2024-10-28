@@ -98,17 +98,16 @@ export default function Home() {
 
 		for (let row = 0; row < ROWS; row++) {
 			let rowArray: Grid[] = [];
-			let rowVisited: number[] = [];
 
 			for (let column = 0; column < COLUMNS; column++) {
 				const grid = createWalledGrid();
 				rowArray.push(grid);
-				rowVisited.push(0);
 			}
 
 			array.push(rowArray);
-			VISITED_ARRAY.push(rowVisited);
 		}
+
+		resetVisitedArray();
 
 		const startPoint = { row: 0, column: 0 };
 		const endPoint = { row: ROWS - 1, column: COLUMNS - 1 };
@@ -118,6 +117,46 @@ export default function Home() {
 		array[startPoint.row][startPoint.column].value = GridStates.START_POSITION;
 		array[endPoint.row][endPoint.column].value = GridStates.END_POSITION;
 
+		setGridArray([...array]);
+	};
+
+	const resetVisitedArray = () => {
+		VISITED_ARRAY = [];
+		for (let row = 0; row < ROWS; row++) {
+			let rowVisited: number[] = [];
+
+			for (let column = 0; column < COLUMNS; column++) {
+				const grid = createWalledGrid();
+				rowVisited.push(0);
+			}
+			VISITED_ARRAY.push(rowVisited);
+		}
+	};
+
+	const resetGridStates = () => {
+		let array = [...gridArray];
+		for (let row = 0; row < ROWS; row++) {
+			for (let column = 0; column < COLUMNS; column++) {
+				if (
+					array[row][column].value !== GridStates.START_POSITION &&
+					array[row][column].value !== GridStates.END_POSITION
+				)
+					array[row][column].value = GridStates.DEFAULT;
+			}
+		}
+		setGridArray([...array]);
+	};
+
+	const resetGridWalls = () => {
+		let array = [...gridArray];
+		for (let row = 0; row < ROWS; row++) {
+			for (let column = 0; column < COLUMNS; column++) {
+				array[row][column].topWall = true;
+				array[row][column].bottomWall = true;
+				array[row][column].leftWall = true;
+				array[row][column].rightWall = true;
+			}
+		}
 		setGridArray([...array]);
 	};
 
@@ -205,13 +244,36 @@ export default function Home() {
 	};
 
 	let globalArray: Grid[][] = [];
+	let mazeSolvingAlgorithm = "maze-solve-dfs";
+	let isPathFound = false;
 
 	const startMazeGeneration = async () => {
 		setDimensions();
-		resetGrid();
+		resetVisitedArray();
+		resetGridStates();
+		resetGridWalls();
 		globalArray = [...gridArray];
 		setIsGenerating(true);
 		await generateMaze({ row: 0, column: 0 }, { row: 0, column: 0 });
+		resetGridStates();
+		setIsGenerating(false);
+	};
+
+	const startMazeSolution = async () => {
+		setDimensions();
+		resetVisitedArray();
+		resetGridStates();
+		globalArray = [...gridArray];
+
+		setIsGenerating(true);
+		isPathFound = false;
+		switch (mazeSolvingAlgorithm) {
+			case "maze-solve-dfs":
+				await solveMazeDFS(gridStartPoint as GridPoint);
+				break;
+			default:
+				break;
+		}
 		setIsGenerating(false);
 	};
 
@@ -234,7 +296,7 @@ export default function Home() {
 					GridStates.ITERATING
 				)
 					globalArray[previousPoint.row][previousPoint.column].value =
-						GridStates.DEFAULT;
+						GridStates.VISITED;
 				if (globalArray[point.row][point.column].value === GridStates.DEFAULT)
 					globalArray[point.row][point.column].value = GridStates.ITERATING;
 
@@ -255,9 +317,69 @@ export default function Home() {
 
 		// Reset changes to original
 		if (globalArray[point.row][point.column].value === GridStates.ITERATING)
-			globalArray[point.row][point.column].value = GridStates.DEFAULT;
+			globalArray[point.row][point.column].value = GridStates.VISITED;
 
 		return globalArray;
+	};
+
+	const solveMazeDFS = async (point: GridPoint) => {
+		VISITED_ARRAY[point.row][point.column] = 1;
+		if (
+			JSON.stringify(point) !== JSON.stringify(gridStartPoint) &&
+			JSON.stringify(point) !== JSON.stringify(gridEndPoint)
+		) {
+			globalArray[point.row][point.column].value = GridStates.VISITED;
+			setGridArray([...globalArray]);
+			await delay(animationSpeed / 2);
+		}
+
+		if (JSON.stringify(point) === JSON.stringify(gridEndPoint)) {
+			isPathFound = true;
+			return globalArray;
+		}
+
+		const neighbors = getCellNeighbors(point, null);
+		const shuffledNeighbors = shuffleArray(neighbors);
+
+		for (let i = 0; i < shuffledNeighbors.length; i++) {
+			const neighbor = shuffledNeighbors[i];
+
+			const wallToProceed: [WallKey, WallKey] | undefined =
+				checkWhichWallToOpen(point, neighbor);
+
+			if (
+				wallToProceed &&
+				!globalArray[point.row][point.column][wallToProceed[0]] &&
+				!VISITED_ARRAY[neighbor.row][neighbor.column] &&
+				!isPathFound
+			) {
+				if (
+					JSON.stringify(point) !== JSON.stringify(gridStartPoint) &&
+					JSON.stringify(point) !== JSON.stringify(gridEndPoint)
+				) {
+					globalArray[neighbor.row][neighbor.column].value =
+						GridStates.ITERATING;
+					setGridArray([...globalArray]);
+					await delay(animationSpeed / 2);
+				}
+				globalArray = await solveMazeDFS(neighbor);
+			}
+		}
+
+		// Reset changes to original
+		if (globalArray[point.row][point.column].value === GridStates.VISITED) {
+			if (isPathFound) {
+				globalArray[point.row][point.column].value = GridStates.PATH;
+				setGridArray([...globalArray]);
+				await delay(2 * animationSpeed);
+			}
+		}
+
+		return globalArray;
+	};
+
+	const setMazeSolvingAlgorithm = (value: string) => {
+		mazeSolvingAlgorithm = value;
 	};
 
 	const showInfoModal = () => {
@@ -293,6 +415,8 @@ export default function Home() {
 				<p> - Right-click and drag to remove the paths</p>
 				<p> - Ctrl + Click to change the start position (Green color)</p>
 				<p> - Ctrl + Right Click to change the end position (Red color)</p>
+				<p> - Click on Generate Maze to start generating a maze</p>
+				<p> - Click on Solve Maze to start solving the maze</p>
 				<br />
 				<p>
 					Source code:{" "}
@@ -309,6 +433,8 @@ export default function Home() {
 							saveMaze={saveMaze}
 							showInfoModal={showInfoModal}
 							startMazeGeneration={startMazeGeneration}
+							startMazeSolution={startMazeSolution}
+							setMazeSolvingAlgorithm={setMazeSolvingAlgorithm}
 						></Topbar>
 						<GridSystem
 							gridArray={gridArray}
