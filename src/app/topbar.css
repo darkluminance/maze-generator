@@ -3,6 +3,16 @@
 	color: rgb(var(--background-start-rgb));
 }
 
+.mazeAlgorithmDropdown {
+	label {
+		color: hsl(var(--foreground-hsl-50));
+	}
+
+	select {
+		width: 200px;
+	}
+}
+
 .infoBtn {
 	min-width: 28px;
 	border-radius: 50%;
